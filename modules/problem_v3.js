@@ -1,3 +1,16 @@
+/**
+ * ok 1. 获取题库列表
+ * ok 2. 获取题目的内容
+ * 3. 更新题目
+ * ok 4. 删除题目
+ * 5. 新建一个题目
+ * ok 6. 获取题目的讨论
+ * ok 7. 获取题目的提交记录
+ * 8. 获取题目的测试用例
+ * 9.
+ *
+ */
+
 let Problem = syzoj.model('problem');
 let JudgeState = syzoj.model('judge_state');
 let FormattedCode = syzoj.model('formatted_code');

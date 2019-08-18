@@ -1,3 +1,16 @@
+/**
+ * ok 1. 用户登录
+ * ok 2. 找到一个用户
+ * 3. 用户注册
+ * 4. 用户登出
+ * 5. 删除一个用户， 逻辑删除
+ * 6. 修改用户信息
+ * 7. 得到用户详细信息
+ * 8. 修改用户密码
+ * 9. 得到用户排名
+ *
+ */
+
 let User = syzoj.model('user');
 const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');

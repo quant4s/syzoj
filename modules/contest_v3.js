@@ -1,13 +1,14 @@
 /**
- * 1. 得到比赛列表
- * 2. 得到一个比赛详细信息（包含管理员列表和题目列表）
+ * ok 1. 得到比赛列表
+ * ok 2. 得到一个比赛详细信息（包含管理员列表和题目列表）
  * 3. 创建一个比赛
  * 4. 更新一个比赛信息
- * 5. 删除一个比赛
- * 6. 得到比赛题目的列表
- * 7. 得到管理员列表
+ * ok 5. 删除一个比赛
+ * ok 6. 得到比赛题目的列表
+ * ok 7. 得到管理员列表
  * 8. 得到排行榜
  * 9. 得到提交记录
+ * 10. 查看比赛的题目
  */
 
 let Contest = syzoj.model('contest')
@@ -57,7 +58,6 @@ app.get('/api/v3/contest/:id', async (req, res) => {
       id: contest.holder.id,
       username: contest.holder.username
     }
-
 
     res.send({ success: true, data: contest })
   } catch (e) {
