@@ -219,7 +219,7 @@ app.get('/api/v3/ranklist', async (req, res) => {
 // }
     let paginate = syzoj.utils.paginate(await User.countForPagination({ is_show: true }), req.query.page, syzoj.config.page.ranklist)
     let ranklist = await User.queryPage(paginate, { is_show: true }, { [sort]: order.toUpperCase() })
-    await ranklist.forEachAsync(async x => x.renderInformation())
+    // await ranklist.forEachAsync(async x => x.renderInformation())
 
     res.send({success: true, data: ranklist})
   } catch (e) {

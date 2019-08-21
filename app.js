@@ -95,13 +95,28 @@ global.syzoj = {
       let router = new Express.Router();
       app.apiRouter = router;
       require('./modules/api_v2');
+      // require('./modules/api_v3');
       return router;
     })());
 
+  app.all('*', function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "http://localhost:8080");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
+    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    // res.header("Access-Control-Allow-Credentials", true);
+    res.header("X-Powered-By", ' 4.4.0')
+    if (req.method == "OPTIONS") res.send(200); /*让options请求快速返回*/
+    else next();
+  });
+
     app.server = http.createServer(app);
 
-    await this.connectDatabase();
+  this.log('loading modules......')
+
+  await this.connectDatabase();
     this.loadModules();
+
+    this.log('connecting redis server......')
 
     // redis and redisCache is for syzoj-renderer
     const redis = require('redis');
@@ -111,26 +126,28 @@ global.syzoj = {
       set: util.promisify(this.redis.set).bind(this.redis)
     };
 
-    if (!module.parent) {
+    // if (!module.parent) {
       // Loaded by node CLI, not by `require()`.
 
-      if (process.send) {
-        // if it's started by child_process.fork(), it must be requested to restart
-        // wait until parent process quited.
-        await new Promise((resolve, reject) => {
-          process.on('message', message => {
-            if (message === 'quited') resolve();
-          });
-          process.send('quit');
-        });
-      }
+      // if (process.send) {
+      //   // if it's started by child_process.fork(), it must be requested to restart
+      //   // wait until parent process quited.
+      //   await new Promise((resolve, reject) => {
+      //     process.on('message', message => {
+      //       if (message === 'quited') resolve();
+      //     });
+      //     process.send('quit');
+      //   });
+      // }
+
+      this.log('connecting judger ......')
 
       await this.lib('judger').connect();
 
       app.server.listen(parseInt(syzoj.config.port), syzoj.config.hostname, () => {
         this.log(`SYZOJ is listening on ${syzoj.config.hostname}:${parseInt(syzoj.config.port)}...`);
       });
-    }
+    // }
   },
   restart() {
     console.log('Will now fork a new process.');

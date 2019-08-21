@@ -3,49 +3,54 @@ let Article = syzoj.model('article');
 let ArticleComment = syzoj.model('article-comment');
 let User = syzoj.model('user');
 
-app.get('/discussions', async(req, res) => {
-
-})
-
-
-app.get('/discussion/:type?', async (req, res) => {
+app.get('/api/v3/discussions/global', async(req, res) => {
   try {
-    if (!['global', 'problems'].includes(req.params.type)) {
-      res.redirect(syzoj.utils.makeUrl(['discussion', 'global']));
-    }
-    const in_problems = req.params.type === 'problems';
-
-    let where;
-    if (in_problems) {
-      where = { problem_id: TypeORM.Not(TypeORM.IsNull()) };
-    } else {
-      where = { problem_id: null };
-    }
+    let where = {problem_id: null}
     let paginate = syzoj.utils.paginate(await Article.countForPagination(where), req.query.page, syzoj.config.page.discussion);
     let articles = await Article.queryPage(paginate, where, {
       sort_time: 'DESC'
     });
 
     for (let article of articles) {
-      await article.loadRelationships();
-      if (in_problems) {
-        article.problem = await Problem.findById(article.problem_id);
+      await article.loadRelationships()
+      article.user = {
+        username: article.user.username,
+        nickname: article.user.nickname
+      }
+    }
+    res.send({success: true, data: articles})
+  } catch(e) {
+
+  }
+})
+
+app.get('/api/v3/discussions/problems', async(req, res) => {
+  try {
+    let where = {problem_id: TypeORM.Not(TypeORM.IsNull())};
+    let paginate = syzoj.utils.paginate(await Article.countForPagination(where), req.query.page, syzoj.config.page.discussion);
+    let articles = await Article.queryPage(paginate, where, {
+      sort_time: 'DESC'
+    });
+
+
+    for (let article of articles) {
+      await article.loadRelationships()
+      article.user = {
+        username: article.user.username,
+        nickname: article.user.nickname
+      }
+      let problem = await Problem.findById(article.problem_id);
+      article.problem = {
+        title: problem.title
       }
     }
 
-    res.render('discussion', {
-      articles: articles,
-      paginate: paginate,
-      problem: null,
-      in_problems: in_problems
-    });
-  } catch (e) {
-    syzoj.log(e);
-    res.render('error', {
-      err: e
-    });
+    res.send({success: true, data: articles})
+
+  } catch(e) {
+
   }
-});
+})
 
 app.get('/api/v3/discussion/:id', async (req, res) => {
   try {
@@ -54,10 +59,27 @@ app.get('/api/v3/discussion/:id', async (req, res) => {
     if (!article) throw new ErrorMessage('无此帖子。');
 
     await article.loadRelationships();
+    article.user = {
+      username: article.user.username,
+      nickname: article.user.nickname
+    }
     // article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
     // article.allowedComment = await article.isAllowedCommentBy(res.locals.user);
     // article.content = await syzoj.utils.markdown(article.content);
 
+    res.send({success: true, data: article})
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+
+app.get('/api/v3/discussion/:id/comments', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
     let where = { article_id: id };
     let commentsCount = await ArticleComment.countForPagination(where);
     let paginate = syzoj.utils.paginate(commentsCount, req.query.page, syzoj.config.page.article_comment);
@@ -67,33 +89,29 @@ app.get('/api/v3/discussion/:id', async (req, res) => {
     });
 
     for (let comment of comments) {
-      comment.content = await syzoj.utils.markdown(comment.content);
-      comment.allowedEdit = await comment.isAllowedEditBy(res.locals.user);
-      await comment.loadRelationships();
-    }
-
-    let problem = null;
-    if (article.problem_id) {
-      problem = await Problem.findById(article.problem_id);
-      if (!await problem.isAllowedUseBy(res.locals.user)) {
-        throw new ErrorMessage('您没有权限进行此操作。');
+      comment.user = await User.findById(comment.user_id);
+      comment.user = {
+        username: comment.user.username,
+        nickname: comment.user.nickname
       }
+      // comment.content = await syzoj.utils.markdown(comment.content);
+      // comment.allowedEdit = await comment.isAllowedEditBy(res.locals.user);
+      // await comment.loadRelationships();
     }
 
-    res.render('article', {
-      article: article,
-      comments: comments,
-      paginate: paginate,
-      problem: problem,
-      commentsCount: commentsCount
-    });
-  } catch (e) {
-    syzoj.log(e);
-    res.render('error', {
-      err: e
-    });
+    // let problem = null;
+    // if (article.problem_id) {
+    //   problem = await Problem.findById(article.problem_id);
+    //   if (!await problem.isAllowedUseBy(res.locals.user)) {
+    //     throw new ErrorMessage('您没有权限进行此操作。');
+    //   }
+    // }
+
+    res.send({success: false, data: comments})
+  } catch(e) {
+
   }
-});
+})
 
 app.get('/article/:id/edit', async (req, res) => {
   try {
